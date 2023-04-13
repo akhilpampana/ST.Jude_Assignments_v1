@@ -1,0 +1,139 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r }
+#############################################################################
+# Import Data to R                                                          #
+#############################################################################
+library(readxl)
+setwd("C:/Users/akhil/Downloads/Tests-20230403T193806Z-001/Tests/")
+input  = read_excel("C:/Users/akhil/Downloads/Tests-20230403T193806Z-001/Tests/Test data.xlsx")
+input$male = ifelse(input$sex %in% c("Male"),1,0)
+```
+```{r}
+#############################################################################
+# Pre processing of dataset for final analysis & Checking for Assumptions   #
+#############################################################################
+####################################################################################
+# Detection of outliers based on box plots
+#####################################################################################
+## remove individuals with missing values 
+colSums(is.na(input)) # Heart2 have 329 missing
+input_no_miss = input[which(!is.na(input$heart2)),]
+
+png("Boxplots_to_determine_outliers_04132023.png",type = "cairo",width     = 3.25,height    = 3.25,units     = "in", res       = 1200,  pointsize = 4)
+par(mfrow = c(2, 2))
+boxplot(input_no_miss$heart2)
+boxplot(input_no_miss$outcome2)
+boxplot(input_no_miss$agedx)
+boxplot(input_no_miss$age_allevts)
+dev.off()
+
+# calculate Zscore based on mean and sd of heart2 variable and remove individuals with zscore > 3 which removes 89 individuals
+mean(input_no_miss$heart2)
+sd(input_no_miss$heart2)
+input_no_miss$zscore_heart2 = (input_no_miss$heart2 - 6.349464)/ 12.22908
+summary(input_no_miss$age_allevts)
+non_outliers_heart2 = input_no_miss[which(input_no_miss$zscore_heart2 < 4),]
+
+png("Boxplots_outliers_Removal_04132023.png",type = "cairo",width     = 3.25,height    = 3.25,units     = "in", res       = 1200,  pointsize = 4)
+par(mfrow = c(2, 2))
+boxplot(non_outliers_heart2$heart2)
+boxplot(non_outliers_heart2$outcome2)
+boxplot(non_outliers_heart2$agedx)
+boxplot(non_outliers_heart2$age_allevts)
+dev.off()
+
+```
+```{r}
+#############################################################################
+# Assumptions Checks for Linear Regression                                  #  
+#############################################################################
+# We took each variable and ploted model statistics to determine whether these:
+# 1. Linearity between variables - plot 1 of the model statistics gives you this information. It is said to be in linear relation ship if you see the horinontal line between fitted & Residuals
+# 2. Data is normally distributed or not: Plot 2 determines this, if the residual line is similar to dashed lines, then it is said to be normally distributed. We can also use this for removing outliers.
+# 3. Test for homogenity of the variance: Scale location plot ( plot 3 ) can help us determine this. Horizontal line with equal spread points is an indicator for this. 
+# 4. Identification of influencial values: Extreme values can tend to effect the outcome of linear regression is generally determined as influenced values. This can be identified by checking plot 4 and generating plots with cook distance. If the standardized residuals values exceeds 0.5, then it is considered as influencial. Plot 4 gives you information of extremee values rownumbers of the dataset which can be removed to get outcome. 
+## Plots scatter for linearity of data
+model = glm(non_outliers_heart2$outcome2~non_outliers_heart2$heart2)
+png("QC_checks_outcome_heart2_04132023.png",type = "cairo",width     = 3.25,height    = 3.25,units     = "in", res       = 1200,  pointsize = 4)
+par(mfrow = c(2, 2))
+plot(model)
+dev.off()
+
+model = glm(non_outliers_heart2$outcome2~non_outliers_heart2$agedx)
+png("QC_checks_outcome_agedx_04132023.png",type = "cairo",width     = 3.25,height    = 3.25,units     = "in", res       = 1200,  pointsize = 4)
+par(mfrow = c(2, 2))
+plot(model)
+dev.off()
+
+model = glm(non_outliers_heart2$outcome2~non_outliers_heart2$age_allevts)
+png("QC_checks_outcome_ageallevts_04132023.png",type = "cairo",width     = 3.25,height    = 3.25,units     = "in", res       = 1200,  pointsize = 4)
+par(mfrow = c(2, 2))
+plot(model)
+dev.off()
+
+model = glm(non_outliers_heart2$outcome2~non_outliers_heart2$male)
+png("QC_checks_outcome_sex_04132023.png",type = "cairo",width     = 3.25,height    = 3.25,units     = "in", res       = 1200,  pointsize = 4)
+par(mfrow = c(2, 2))
+plot(model)
+dev.off()
+
+## Plots scatter for linearity of data with binary variable 
+model = glm(non_outliers_heart2$outcome~non_outliers_heart2$heart2,family = binomial(link="logit"))
+png("QC_checks_outcome_heart2_v1_04132023.png",type = "cairo",width     = 3.25,height    = 3.25,units     = "in", res       = 1200,  pointsize = 4)
+par(mfrow = c(2, 2))
+plot(model)
+dev.off()
+
+model = glm(non_outliers_heart2$outcome~non_outliers_heart2$agedx,family = binomial(link="logit"))
+png("QC_checks_outcome_agedx_V1_04132023.png",type = "cairo",width     = 3.25,height    = 3.25,units     = "in", res       = 1200,  pointsize = 4)
+par(mfrow = c(2, 2))
+plot(model)
+dev.off()
+
+model = glm(non_outliers_heart2$outcome~non_outliers_heart2$age_allevts,family = binomial(link="logit"))
+png("QC_checks_outcome_ageallevts_v1_04132023.png",type = "cairo",width     = 3.25,height    = 3.25,units     = "in", res       = 1200,  pointsize = 4)
+par(mfrow = c(2, 2))
+plot(model)
+dev.off()
+
+model = glm(non_outliers_heart2$outcome~non_outliers_heart2$male,family = binomial(link="logit"))
+png("QC_checks_outcome_sex_v1_04132023.png",type = "cairo",width     = 3.25,height    = 3.25,units     = "in", res       = 1200,  pointsize = 4)
+par(mfrow = c(2, 2))
+plot(model)
+dev.off()
+
+```
+```{r}
+
+#############################################################################
+# Regression Analysis                          #  
+#############################################################################
+##################################
+# Linear Regression 
+################################
+library(car)
+## Smaller cook distance indicating no influencial variables
+model <- glm(non_outliers_heart2$outcome2~non_outliers_heart2$heart2 + non_outliers_heart2$agedx+non_outliers_heart2$male + non_outliers_heart2$age_allevts,na.action = na.omit)
+### Vif is less than 5 indicating low multicollinearity
+vif(model)
+vv = summary(model)$coef
+vv = as.data.frame(vv)
+vv[which(vv$`Pr(>|t|)` < 0.05),]
+write.table(vv,file="Significant_results_of_linear_regression.csv",row.names = F,col.names = T,sep = "\t",dec = ".",quote = F)
+
+##################################
+# Logistic Regression 
+################################
+## Smaller cook distance indicating no influencial variables
+model <- glm(non_outliers_heart2$outcome~non_outliers_heart2$heart2 + non_outliers_heart2$agedx+non_outliers_heart2$male + non_outliers_heart2$age_allevts,na.action = na.omit,family = binomial(link="logit"))
+vv = summary(model)$coef
+vv = as.data.frame(vv)
+vv[which(vv$`Pr(>|z|)` < 0.05),]
+write.table(vv,file="Significant_results_of_logsitc_regression.csv",row.names = F,col.names = T,sep = "\t",dec = ".",quote = F)
+```
+

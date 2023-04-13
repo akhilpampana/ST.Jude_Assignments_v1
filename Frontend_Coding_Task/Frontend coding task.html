@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <title></title>
+   </head>
+   <body>
+      <h1>Incidence Of Tuberculosis Based On WHO Data</h1>
+	  <style type="text/css">
+		h1 {
+			text-align: center;
+			}
+		</style>
+   </body>
+</html>
+
+
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- We loaded d3.js here -->
+<script src="https://d3js.org/d3.v4.js"></script>
+
+<!-- We created a scatter plot div containing script for the plot with input file from the github-->
+<div id="ScatterPlot" ></div>
+
+
+<script>
+
+// set the dimensions and margins of the graph
+var margin = {top: 10, right: 100, bottom: 20, left: 60},
+    width = 460 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select("#ScatterPlot")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+//Read the data
+d3.csv("https://raw.githubusercontent.com/akhilpampana/ST.Jude_Assignments/main/64c37ab0-7325-4434-a36b-6a44d91ef8fc.csv", function(data) {
+
+  // Add X axis
+  var x = d3.scaleLinear()
+    .domain([1998, 2022])
+    .range([ 0, width ]);
+  svg.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .call(d3.axisBottom(x));
+
+  // Add Y axis
+  var y = d3.scaleLinear()
+    .domain([0,22000])
+    .range([ height, 0]);
+  svg.append("g")
+    .call(d3.axisLeft(y));
+
+  // Add dots
+  svg.append('g')
+    .selectAll("dot")
+    .data(data)
+    .enter()
+    .append("circle")
+      .attr("cx", function (d) { return x(d.Period); } )
+      .attr("cy", function (d) { return y(d.FactValueNumeric); } )
+      .attr("r", 5.0)
+      .style("fill", "#69b3a2")
+
+})
+
+</script>
+
+<!-- Description of the plot along with explaination -->
+<h3>The trend of incident cases of tuberculosis in USA is stratified by years. There has been a decreasing trend in the number of cases from 2000 to 2021, with the highest number of cases being reported in 2000 (19,000) and the lowest in 2020 (7,900). The gradual decline in the number of incident cases could be due to advances in technology and stringent protocols used in detection. Additionally, there has been a sharp decline in cases compared to the pre-COVID era, likely due to stringent COVID protocols and underdiagnosis of the disease.</h3>
+
+<!-- We created another div here to plot distribution of incidence of tuberculosis in 2021 and plotted histogram for countries like USA, UK, Japan etc.-->
+<div id="Histogram"></div>
+
+<script>
+
+
+// set the dimensions and margins of the graph
+var margin = {top: 50, right: 30, bottom: 50, left: 40},
+    width = 460 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+
+// append the svg object to the body of the page
+var svg1 = d3.select("#Histogram")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+// Parse the Data
+d3.csv("https://raw.githubusercontent.com/akhilpampana/ST.Jude_Assignments/main/incident_diseases_for_subset_v1.csv", function(data) {
+
+  // sort data
+  data.sort(function(b, a) {
+    return a.Value - b.Value;
+  });
+
+  // X axis
+  var x = d3.scaleBand()
+    .range([ 0, width ])
+    .domain(data.map(function(d) { return d.Location; }))
+    .padding(0.2);
+  svg1.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .call(d3.axisBottom(x))
+    .selectAll("text")
+      .attr("transform", "translate(-10,0)rotate(-45)")
+      .style("text-anchor", "end");
+
+  // Add Y axis
+  var y = d3.scaleLinear()
+    .domain([0,15000])
+    .range([ height, 10]);
+  svg1.append("g")
+    .call(d3.axisLeft(y));
+
+  // Bars
+  svg1.selectAll("mybar")
+    .data(data)
+    .enter()
+    .append("rect")
+      .attr("x", function(d) { return x(d.Location); })
+      .attr("y", function(d) { return y(d.FactValueNumeric); })
+      .attr("width", x.bandwidth())
+      .attr("height", function(d) { return height - y(d.FactValueNumeric); })
+      .attr("fill", "#F8766D")
+
+})
+
+</script>
+
+<!-- Description of the plot along with explaination -->
+<h3> The above histogram depicts comparision of Tuberculosis in 7 countries in 2021. Srilanka has reported highest number of cases(14000 cases) where as Georgia has reported low number of cases(2400 cases).</h3>

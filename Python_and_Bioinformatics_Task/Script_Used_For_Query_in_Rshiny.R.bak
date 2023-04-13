@@ -1,0 +1,80 @@
+### PLease do install these packages When running the code
+library(shiny)
+library(biomaRt)
+library(org.Hs.eg.db)
+library(rsconnect)
+options(repos=BiocManager::repositories())
+rsconnect::setAccountInfo(name='apampana',
+                          token='B52165239AD787469D6997C2355A824B',
+                          secret='f+/qozSR2VJx7fl4PnzHeCH1NwTNjVbvtjkqxiKH')
+
+
+
+ui <- fluidPage(
+  titlePanel("Transcript ID to NM ID matching"),
+  sidebarLayout(
+    sidebarPanel(
+      h4("Input Data"),
+      selectInput("Format", "Select a Variable:", c("ENSEMBL", "REFSEQ", "GENE")),
+      textInput("user_input", "Enter your input here:"),
+      actionButton("submit", "Submit")
+    ),
+    mainPanel(
+      h4("Results"),
+      verbatimTextOutput("output_text")
+    )
+  )
+)
+
+
+server <- function(input, output) {
+  var <- useMart("ensembl")
+  var <- useDataset("hsapiens_gene_ensembl", var)
+  observeEvent(input$submit,{
+    if(grepl(",",input$user_input)){
+      ids = trimws(strsplit(input$user_input,",")[[1]])
+    } else {
+      ids = input$user_input
+    }
+    if(input$Format == "ENSEMBL"){
+      ids <- input$user_input
+      print(ids)
+      ensembl_to_nm_id_gene = getBM(
+        attributes = c("ensembl_transcript_id", "refseq_mrna","external_gene_name"),
+        filters = "ensembl_transcript_id",
+        values = list(ids),
+        mart = var
+      )
+      output$output_text <- renderPrint({
+        ensembl_to_nm_id_gene
+      })
+    } else if(input$Format == "REFSEQ"){
+      ids <- input$user_input
+      print(ids)
+      nmid_to_ensemble_id = getBM(
+        attributes = c("ensembl_transcript_id", "refseq_mrna","external_gene_name"),
+        filters = "refseq_mrna",
+        values = list(ids),
+        mart = var
+      )
+      output$output_text <- renderPrint({
+        nmid_to_ensemble_id
+      })
+    } else {
+      ids <- input$user_input
+      print(ids)
+      gene_id = getBM(
+        attributes = c("ensembl_transcript_id", "refseq_mrna","external_gene_name"),
+        filters = "external_gene_name",
+        values =list(ids),
+        mart = var
+      )
+      output$output_text <- renderPrint({
+        gene_id
+      })
+    }
+  })
+}
+
+shinyApp(ui = ui, server = server)
+
